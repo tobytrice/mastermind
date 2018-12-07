@@ -1,0 +1,117 @@
+#! /usr/bin/python
+
+print('Content-type: text/html')
+print('')
+
+print('</html><body>')
+print('<h1>Mastermind</h1>')
+
+import cgi 
+form = cgi.FieldStorage()
+
+# Set up arrays / parameters
+code = []
+current_guess = []
+current_guess_int = []
+current_feedback = []
+hist_guess = {}
+hist_feedback = {}
+
+round = 1
+
+# Record results from current round, reset, create next round
+def new_round():
+    hist_guess[round] = current_guess
+    current_guess.clear()
+    round = round + 1
+
+def gen_code():
+    import random
+    for x in range(4):
+        code.append(random.randint(1, 6))
+
+print('''
+    <p>In each field below, enter an integer between 1 and 6</p>
+    <br>
+    <form action='mastermind.py' method='get'>
+        <input id='u_1' name='guessInput' type='number' min='1' max='6' required></input>
+        <input id='u_2' name='guessInput' type='number' min='1' max='6' required></input>
+        <input id='u_3' name='guessInput' type='number' min='1' max='6' required></input>
+        <input id='u_4' name='guessInput' type='number' min='1' max='6' required></input>
+        <input type='submit'>
+    </form>
+''')
+
+print('<p>')
+print('The code is:')
+gen_code()
+print(code)
+print('</p>')
+
+# Append input to current_guess array
+def guess():
+    if 'guessInput' in form:
+        current_guess.extend(form.getlist('guessInput'))
+        current_guess_int.extend([int(x) for x in current_guess])
+
+        print('<p>For round ' + str(round) + ', you guessed:    ')
+        print(current_guess_int)
+        print('</p>')
+    else:
+        print('<p>Please enter values to play.</p>')
+
+print('<p>')
+guess()
+print('</p>')
+
+# def search_arrays(c, g):
+#     for (ci, cv) in enumerate(c):
+#         for (gi, gv) in enumerate(g):
+#             if (ci == gi) and (cv == gv):
+#                 current_feedback.append('B')
+#             elif (ci != gi) and (cv == gv):
+#                 current_feedback.append('W')
+#             else:
+#                 current_feedback.append('N')
+#     print(current_feedback)
+
+def search_arrays(c, g):
+    e_c = list(enumerate(c))
+    e_g = list(enumerate(g))
+    e_num = {}
+    e_fb = []
+
+    # Loop through target arrays comparing all keys and values
+    for (gi, gv) in e_g:
+        for (ci, cv) in e_c:
+            if (ci == gi) and (cv == gv):
+                current_feedback.append('B')
+            elif (ci != gi) and (cv == gv):
+                current_feedback.append('W')
+            else:
+                current_feedback.append('N')
+
+    # Append dictionary (e_num) with feedback
+    for i in range(1,5):
+        v_low       = (i-1)*4
+        v_high      = i*4
+        e_num[i]    = list(current_feedback[v_low:v_high])
+
+    # Transform feedback into single list (e_fb)
+    for f in e_num:
+        if 'B' in e_num[f]:
+            e_fb.append('B')
+        elif 'W' in e_num[f]:
+            e_fb.append('W')
+        else:
+            e_fb.append('N')
+
+    print('<p>The feedback for this round:      ')
+    print(e_fb)
+    print('</p>')
+
+print('<p>')
+search_arrays(code, current_guess_int)
+print('</p>')
+
+print('</body></html>')
